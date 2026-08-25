@@ -1,0 +1,45 @@
+name: News First Bot
+
+on:
+  schedule:
+    # Toutes les 15 minutes, pour capter les publications au plus près
+    - cron: "*/15 * * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write   # nécessaire pour committer l'état (state/sent_events.json)
+
+jobs:
+  run-bot:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout du repo
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Installer les dépendances
+        run: pip install -r requirements.txt
+
+      - name: Lancer le bot
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          SEUIL_ALERTE: ${{ vars.SEUIL_ALERTE }}
+          ENVOYER_MEME_SANS_ALERTE: ${{ vars.ENVOYER_MEME_SANS_ALERTE }}
+        run: python news_first_bot.py
+
+      - name: Sauvegarder l'état (évite les alertes en double)
+        run: |
+          git config user.name "news-first-bot"
+          git config user.email "actions@github.com"
+          if ! git diff --quiet -- state/sent_events.json 2>/dev/null; then
+            git add state/sent_events.json
+            git commit -m "Update bot state [skip ci]"
+            git push
+          else
+            echo "Aucun changement d'état à committer."
+          fi
