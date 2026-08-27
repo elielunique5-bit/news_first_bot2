@@ -2,7 +2,7 @@ name: News First Bot
 
 on:
   schedule:
-    # Toutes les 15 minutes, pour capter les publications au plus près
+    - cron: "0 5 * * *"
     - cron: "*/15 * * * *"
   workflow_dispatch: {}
 
@@ -29,9 +29,10 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           SEUIL_ALERTE: ${{ vars.SEUIL_ALERTE }}
+         
           ENVOYER_MEME_SANS_ALERTE: ${{ vars.ENVOYER_MEME_SANS_ALERTE }}
+          RUN_MODE: ${{ (github.event.schedule == '0 5 * * *' || github.event_name == 'workflow_dispatch') && 'briefing' || 'watch' }}
         run: python news_first_bot.py
-
       - name: Sauvegarder l'état (évite les alertes en double)
         run: |
           git config user.name "news-first-bot"
