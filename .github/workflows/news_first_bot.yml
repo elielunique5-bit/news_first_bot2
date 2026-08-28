@@ -7,7 +7,7 @@ on:
   workflow_dispatch: {}
 
 permissions:
-  contents: write   # nécessaire pour committer l'état (state/sent_events.json)
+  contents: write
 
 jobs:
   run-bot:
@@ -29,11 +29,11 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           SEUIL_ALERTE: ${{ vars.SEUIL_ALERTE }}
-         
           ENVOYER_MEME_SANS_ALERTE: ${{ vars.ENVOYER_MEME_SANS_ALERTE }}
           RUN_MODE: ${{ (github.event.schedule == '0 5 * * *' || github.event_name == 'workflow_dispatch') && 'briefing' || 'watch' }}
         run: python news_first_bot.py
-      - name: Sauvegarder l'état (évite les alertes en double)
+
+      - name: Sauvegarder l'état (évite les alertes et briefings en double)
         run: |
           git config user.name "news-first-bot"
           git config user.email "actions@github.com"
